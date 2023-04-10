@@ -1,4 +1,5 @@
-use crate::CLIENT;
+use crate::{mysql_conn::CONN, CLIENT};
+use mysql::{params, prelude::Queryable};
 use reqwest::Response;
 use serde::Deserialize;
 use std::{
@@ -17,7 +18,7 @@ pub async fn login() -> Result<(), Box<dyn Error>> {
     let params = [("email", "1244993561@qq.com"), ("passwd", pwd.as_str())];
     let res = CLIENT
         .lock()
-        .await
+        .unwrap()
         .post("https://xn--gmq396grzd.com/auth/login")
         .form(&params)
         .send()
@@ -27,7 +28,14 @@ pub async fn login() -> Result<(), Box<dyn Error>> {
         let res_response = res.json::<LoginInResp>().await?;
         println!("{:?}", res_response);
         if res_response.ret != 1 {
+            CONN.lock().unwrap().exec_batch(
+                r"INSERT INTO check_in (check_in_res) VALUES (:check_in_res)",
+                vec![params! {
+                     "check_in_res" => res_response.msg,
+                }],
+            )?;
             println!("登录失败");
+            return Err("登录失败".into());
         }
         return Ok(());
     }
