@@ -8,7 +8,8 @@ use ::mysql::prelude::Queryable;
 use lazy_static::lazy_static;
 use mysql_conn::CONN;
 use reqwest::Client;
-use std::{error::Error, sync::Mutex};
+use std::error::Error;
+use tokio::sync::Mutex;
 
 lazy_static! {
     pub static ref CLIENT: Mutex<Client> = {

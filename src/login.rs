@@ -1,11 +1,7 @@
 use crate::{email::send_email, mysql_conn::insert_log, read_config::read_config, CLIENT};
 use reqwest::Response;
 use serde::Deserialize;
-use std::{
-    error::Error,
-    fs::File,
-    io::{BufRead, BufReader},
-};
+use std::error::Error;
 
 #[derive(Deserialize, Debug)]
 struct LoginInResp {
@@ -24,14 +20,20 @@ pub async fn login() -> Result<(), Box<dyn Error>> {
     ];
     let res = CLIENT
         .lock()
-        .unwrap()
+        .await
         .post("https://xn--gmq396grzd.com/auth/login")
         .form(&params)
         .send()
         .await?;
 
     async fn json_parse(res: Response) -> Result<(), Box<dyn Error>> {
-        let res_response = res.json::<LoginInResp>().await?;
+        let res_response = match res.json::<LoginInResp>().await {
+            Ok(res) => res,
+            Err(_) => LoginInResp {
+                msg: "".to_string(),
+                ret: 1,
+            },
+        };
         println!("{:?}", res_response);
         if res_response.ret != 1 {
             send_email("登录失败", res_response.msg.as_str())?;

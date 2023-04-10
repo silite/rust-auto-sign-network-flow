@@ -12,7 +12,7 @@ struct CheckInResp {
 pub async fn check_in() -> Result<(), Box<dyn Error>> {
     let res = CLIENT
         .lock()
-        .unwrap()
+        .await
         .post("https://xn--gmq396grzd.com/user/checkin")
         .send()
         .await?
