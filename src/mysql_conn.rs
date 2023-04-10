@@ -1,12 +1,12 @@
 use lazy_static::lazy_static;
+use mysql::prelude::Queryable;
 use serde::Deserialize;
-use std::fs::File;
-use std::io::Read;
+use std::error::Error;
 use std::sync::Mutex;
-use std::{error::Error, path::Path};
-use toml::from_str;
 
-use mysql::{Pool, PooledConn};
+use mysql::{params, Pool, PooledConn};
+
+use crate::read_config::read_config;
 
 #[derive(Debug, Default, Deserialize)]
 struct Config {
@@ -18,21 +18,13 @@ struct Config {
 }
 
 impl Config {
-    pub fn set_default_file<T>(&mut self, path: T) -> Result<(), Box<dyn Error>>
-    where
-        // https://rusty-ferris.pages.dev/blog/asref-vs-borrow-trait/
-        T: AsRef<Path>,
-    {
-        let mut file = File::open(path)?;
-        let mut config_string = String::new();
-        file.read_to_string(&mut config_string)?;
-        from_str(&config_string).map(|config: Config| {
-            self.username = config.username;
-            self.password = config.password;
-            self.host = config.host;
-            self.port = config.port;
-            self.database = config.database;
-        })?;
+    pub fn set_default_file(&mut self) -> Result<(), Box<dyn Error>> {
+        let config: Config = read_config("config.toml")?;
+        self.username = config.username;
+        self.password = config.password;
+        self.host = config.host;
+        self.port = config.port;
+        self.database = config.database;
         Ok(())
     }
 }
@@ -40,7 +32,7 @@ impl Config {
 lazy_static! {
     pub static ref CONN: Mutex<PooledConn> = {
         let mut config = Config::default();
-        config.set_default_file("config.toml").unwrap();
+        config.set_default_file().unwrap();
         let url = format!(
             "mysql://{}:{}@{}:{}/{}",
             config.username, config.password, config.host, config.port, config.database
@@ -48,6 +40,16 @@ lazy_static! {
         let pool = Pool::new(url.as_str()).unwrap();
         Mutex::new(pool.get_conn().unwrap())
     };
+}
+
+pub fn insert_log(log: &str) -> Result<(), Box<dyn Error>> {
+    CONN.lock().unwrap().exec_batch(
+        r"INSERT INTO check_in (check_in_res) VALUES (:check_in_res)",
+        vec![params! {
+             "check_in_res" => log
+        }],
+    )?;
+    Ok(())
 }
 
 #[test]

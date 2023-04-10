@@ -1,6 +1,8 @@
 pub mod check_in;
+pub mod email;
 pub mod login;
 pub mod mysql_conn;
+pub mod read_config;
 
 use ::mysql::prelude::Queryable;
 use lazy_static::lazy_static;
