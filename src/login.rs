@@ -1,4 +1,4 @@
-use crate::{mysql_conn::insert_log, read_config::read_config, CLIENT};
+use crate::{email::send_email, mysql_conn::insert_log, read_config::read_config, CLIENT};
 use reqwest::Response;
 use serde::Deserialize;
 use std::{
@@ -34,6 +34,7 @@ pub async fn login() -> Result<(), Box<dyn Error>> {
         let res_response = res.json::<LoginInResp>().await?;
         println!("{:?}", res_response);
         if res_response.ret != 1 {
+            send_email("登录失败", res_response.msg.as_str())?;
             insert_log(res_response.msg.as_str())?;
             return Err("登录失败".into());
         }

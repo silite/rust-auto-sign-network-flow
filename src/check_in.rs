@@ -2,7 +2,7 @@ use std::error::Error;
 
 use serde::Deserialize;
 
-use crate::{mysql_conn::insert_log, CLIENT};
+use crate::{email::send_email, mysql_conn::insert_log, CLIENT};
 
 #[derive(Deserialize, Debug)]
 struct CheckInResp {
@@ -19,6 +19,7 @@ pub async fn check_in() -> Result<(), Box<dyn Error>> {
         .json::<CheckInResp>()
         .await?;
 
+    send_email("签到结果", res.msg.as_str())?;
     insert_log(res.msg.as_str())?;
     Ok(())
 }
