@@ -18,18 +18,20 @@ pub async fn check_in() -> Result<(), Box<dyn Error>> {
         .send()
         .await?
         .text()
-        .await?;
+        .await?
+        .replace("\"", "\\\"");
 
-    let res: String = from_str(&res)?;
-    send_email("签到结果", res.as_str())?;
-    insert_log(res.as_str())?;
+    let result: String = from_str(&format!("\"{}\"", res))?;
+    send_email("签到结果", result.as_str())?;
+    insert_log(result.as_str())?;
     Ok(())
 }
 
 #[test]
-fn feature() {
-    let ch = '汉' as i32;
-    let ch_unicode = format!("{:X}", ch);
-    println!("{}", ch);
-    println!("{}", ch_unicode);
+fn feature() -> Result<(), Box<dyn Error>> {
+    let t = r#"\"\u60a8\""#;
+    println!("{}", t);
+    let res: String = from_str(&format!("\"{}\"", t))?;
+    println!("{}", res);
+    Ok(())
 }
