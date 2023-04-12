@@ -16,10 +16,10 @@ pub async fn check_in() -> Result<(), Box<dyn Error>> {
         .post("https://xn--gmq396grzd.com/user/checkin")
         .send()
         .await?
-        .json::<CheckInResp>()
+        .text()
         .await?;
 
-    send_email("签到结果", res.msg.as_str())?;
-    insert_log(res.msg.as_str())?;
+    send_email("签到结果", res.as_str())?;
+    insert_log(res.as_str())?;
     Ok(())
 }
