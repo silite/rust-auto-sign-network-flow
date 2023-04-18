@@ -1,19 +1,18 @@
 use std::error::Error;
 
 use mysql::serde_json::from_str;
+use reqwest::Client;
 use serde::Deserialize;
 
-use crate::{email::send_email, mysql_conn::insert_log, CLIENT};
+use crate::{email::send_email, mysql_conn::insert_log};
 
 #[derive(Deserialize, Debug)]
 struct CheckInResp {
     msg: String,
     ret: i32,
 }
-pub async fn check_in() -> Result<(), Box<dyn Error>> {
-    let res = CLIENT
-        .lock()
-        .await
+pub async fn check_in(client: Client) -> Result<(), Box<dyn Error>> {
+    let res = client
         .post("https://xn--gmq396grzd.com/user/checkin")
         .send()
         .await?

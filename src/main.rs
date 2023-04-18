@@ -18,8 +18,8 @@ impl ScheduleJob for CheckInJob {
         args: Option<mysql::serde_json::Value>,
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>> {
         Box::pin(async {
-            login().await.unwrap();
-            check_in().await.unwrap();
+            let client = login().await.unwrap();
+            check_in(client).await.unwrap();
         })
     }
 }

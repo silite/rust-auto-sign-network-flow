@@ -11,19 +11,6 @@ use reqwest::Client;
 use std::error::Error;
 use tokio::sync::Mutex;
 
-lazy_static! {
-    pub static ref CLIENT: Mutex<Client> = {
-        let proxy = reqwest::Proxy::https("http://127.0.0.1:7890");
-        Mutex::new(
-            reqwest::Client::builder()
-                .proxy(proxy.unwrap())
-                .cookie_store(true)
-                .build()
-                .unwrap(),
-        )
-    };
-}
-
 pub fn init() -> Result<(), Box<dyn Error>> {
     CONN.lock().unwrap().query_drop(
         r"CREATE TABLE IF NOT EXISTS check_in (

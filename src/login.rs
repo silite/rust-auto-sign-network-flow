@@ -1,5 +1,5 @@
-use crate::{email::send_email, mysql_conn::insert_log, read_config::read_config, CLIENT};
-use reqwest::Response;
+use crate::{email::send_email, mysql_conn::insert_log, read_config::read_config};
+use reqwest::{Client, Response};
 use serde::Deserialize;
 use std::error::Error;
 
@@ -12,15 +12,19 @@ struct LoginInResp {
 struct LoginIdentity {
     login_pwd: String,
 }
-pub async fn login() -> Result<(), Box<dyn Error>> {
+pub async fn login() -> Result<Client, Box<dyn Error>> {
     let login_identity: LoginIdentity = read_config("config.toml")?;
     let params = [
         ("email", "1244993561@qq.com"),
         ("passwd", login_identity.login_pwd.as_str()),
     ];
-    let res = CLIENT
-        .lock()
-        .await
+    let proxy = reqwest::Proxy::https("http://127.0.0.1:7890");
+    let client = reqwest::Client::builder()
+        .proxy(proxy.unwrap())
+        .cookie_store(true)
+        .build()
+        .unwrap();
+    let res = client
         .post("https://xn--gmq396grzd.com/auth/login")
         .form(&params)
         .send()
@@ -44,5 +48,5 @@ pub async fn login() -> Result<(), Box<dyn Error>> {
     }
 
     json_parse(res).await?;
-    Ok(())
+    Ok(client)
 }
